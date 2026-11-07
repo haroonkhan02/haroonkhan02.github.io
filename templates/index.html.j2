@@ -1,0 +1,101 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ profile.name }} · {{ profile.role }}{% endblock %}
+{% block body %}
+<a class="skip" href="#work">Skip to projects</a>
+<nav class="nav" aria-label="Main">
+  <a class="nav__name" href="#top">{{ profile.name }}</a>
+  <a href="#work">Work</a>
+  <a href="#demos">Demos</a>
+  <a href="#about">About</a>
+</nav>
+
+<main id="top">
+  <header class="hero wrap">
+    <p class="eyebrow">{{ profile.role }} · {{ profile.location }}</p>
+    <h1>{{ profile.headline }}</h1>
+    <div class="hero__foot">
+      <p class="lede">{{ profile.intro }}</p>
+      <dl class="tally">
+        <div><dt>Projects</dt><dd>{{ cards|length }}</dd></div>
+        <div><dt>Browser demos</dt><dd>{{ demos|length }}</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <section id="work" class="wrap section" aria-labelledby="work-title">
+    <p class="eyebrow">Selected work</p>
+    <h2 id="work-title">Each result, with its main limitation.</h2>
+    <ul class="grid">
+      {% for card in cards %}
+      {% set p = card.project %}
+      <li class="shell shell--{{ p.size }} reveal">
+        <article class="card">
+          {% if card.poster %}
+          <div class="card__media card__media--{{ p.media.fit }}"{% if p.media.fit == "native" %} style="aspect-ratio: {{ card.width }} / {{ card.height }}"{% endif %}{% if card.video %} data-video="{{ card.video }}"{% endif %}>
+            <img src="{{ card.poster }}" width="{{ card.width }}" height="{{ card.height }}" alt="{{ p.media.alt }}" style="object-position: {{ p.media.position }}"{% if not loop.first %} loading="lazy"{% endif %} decoding="async">
+          </div>
+          {% endif %}
+          <div class="card__body">
+            <p class="card__area">{{ p.area }}</p>
+            <h3><a href="{{ p.url }}">{{ p.title }}</a></h3>
+            <p class="card__summary">{{ p.summary }}</p>
+            <div class="result">
+              <p class="result__value">{{ p.metric }}</p>
+              <p class="result__label">{{ p.metric_label }}{% if p.compare %}<span>{{ p.compare }}</span>{% endif %}</p>
+            </div>
+            <p class="caveat"><span>Limitation</span> {{ p.caveat }}</p>
+            <ul class="tags" aria-label="Tools">
+              {% for tag in p.tags %}<li>{{ tag }}</li>{% endfor %}
+            </ul>
+            <p class="card__links">
+              <a href="{{ p.url }}">Code</a>
+              {% if p.demo %}<a href="{{ p.demo }}">Live demo</a>{% endif %}
+            </p>
+          </div>
+        </article>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section id="demos" class="wrap section" aria-labelledby="demos-title">
+    <p class="eyebrow">Try them</p>
+    <h2 id="demos-title">Models that run in your browser.</h2>
+    <p class="lede">These demos download a quantised ONNX model and run it on your device with onnxruntime-web, so there is no inference server behind them.</p>
+    <ol class="demos">
+      {% for p in demos %}
+      <li class="reveal">
+        <a href="{{ p.demo }}">
+          <span class="demos__title">{{ p.title }}</span>
+          <span class="demos__note">{{ p.demo_note }}</span>
+          <span class="demos__arrow" aria-hidden="true">↗</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section id="about" class="wrap section about" aria-labelledby="about-title">
+    <div>
+      <p class="eyebrow">About</p>
+      <h2 id="about-title">How I work.</h2>
+      <p class="lede">{{ profile.about }}</p>
+      <ul class="contact" aria-label="Contact links">
+        {% for link in profile.links %}
+        <li><a href="{{ link.url }}"><span>{{ link.label }}</span><span class="contact__handle">{{ link.handle }}</span><span aria-hidden="true">↗</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <dl class="skills">
+      {% for group, items in profile.skills.items() %}
+      <div><dt>{{ group }}</dt><dd>{{ items|join(" · ") }}</dd></div>
+      {% endfor %}
+    </dl>
+  </section>
+</main>
+
+<footer class="wrap footer">
+  <p>© 2026 {{ profile.full_name }}</p>
+  <p><a href="https://github.com/haroonkhan02/haroonkhan02.github.io">Source of this site</a></p>
+</footer>
+{% endblock %}
