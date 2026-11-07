@@ -1,0 +1,226 @@
+# One entry per card, in display order. Grid rows must add up to 12 columns:
+# large = 7, medium = 5, small = 4. `site-verify` checks that every number in the
+# summary, metric, compare, caveat and demo_note appears in that repo's README.
+
+- repo: robot-arm-imitation-learning
+  title: Robot arm imitation learning
+  area: Robotics
+  size: large
+  summary: >-
+    A simulated MuJoCo arm learns pick-and-place from demonstrations. Controlled runs
+    compare behaviour cloning with my own ACT to find which part does the work.
+  metric: 99.0 %
+  metric_label: success on unseen layouts, mean of three seeds
+  compare: Plain MLP 0.1 %
+  caveat: >-
+    An MLP with chunking and ensembling reaches 87.3 %, so most of the gain doesn't come
+    from the transformer.
+  tags: [MuJoCo, PyTorch, ACT]
+  media:
+    source: assets/rollouts.gif
+    alt: Simulated robot arms picking up cubes and placing them on goal markers
+
+- repo: visual-odometry-slam
+  title: Visual odometry and SLAM
+  area: Robotics
+  size: medium
+  summary: >-
+    Estimates a hand-held camera's path from its images alone, with loop closure and
+    pose-graph optimisation, scored against motion capture.
+  metric: 1.4–8.8 cm
+  metric_label: trajectory error (ATE) on TUM RGB-D with loop closure
+  compare: Odometry alone 4.8–19.2 cm
+  caveat: >-
+    Loop closure fixes accumulated drift, not local error. Monocular tracking is far
+    worse, at 10.8–148.3 cm.
+  tags: [OpenCV, ORB, Pose graph]
+  media:
+    source: assets/demo.gif
+    alt: Camera view with tracked features beside the estimated path and ground truth
+
+- repo: clinic-voice-agent
+  title: Clinic voice agent
+  area: LLMs and voice
+  size: medium
+  summary: >-
+    An AI phone receptionist: Twilio Media Streams, Pipecat, Deepgram speech and Claude tool
+    use, with guardrails screening every caller turn before the LLM.
+  metric: 0.79 s
+  metric_label: median voice-to-voice latency in simulated calls
+  compare: 20 / 20 right script heard
+  caveat: >-
+    Emergency rules recall only 0.45 on held-out lines against 1.00 on the tuned set, and
+    the conversation agent has not been evaluated live.
+  tags: [Pipecat, Twilio, Claude]
+  media:
+    source: reports/figures/latency.png
+    alt: Charts of voice-to-voice latency by call type
+    fit: contain
+
+- repo: multi-object-tracking-bytetrack
+  title: Multi-object tracking
+  area: Computer vision
+  size: large
+  summary: >-
+    Tracks pedestrians with persistent IDs: YOLO11x detections, my own Kalman filter and
+    Hungarian matching, and SORT against ByteTrack on MOT17.
+  metric: 51.1 HOTA
+  metric_label: ByteTrack, with 269 ID switches
+  compare: SORT 48.9 HOTA, 512 switches
+  caveat: >-
+    Motion alone can't re-identify people after long occlusions. The detector covers only
+    38.0 % of heavily occluded boxes.
+  tags: [YOLO, Kalman filter, TrackEval]
+  media:
+    source: assets/demo.gif
+    alt: SORT and ByteTrack side by side tracking a crowd with coloured ID boxes
+
+- repo: construction-safety-lidar-vision
+  title: Construction safety monitor
+  area: Computer vision
+  size: small
+  summary: >-
+    Per-worker PPE checks from a camera, and LiDAR danger-zone alerts around a machine.
+  metric: 17/18
+  metric_label: red-zone frames alerted, with no false alarms
+  compare: PPE mAP@0.5 0.671 on clean test images
+  caveat: >-
+    Violation flagging reaches 0.68 recall, and LiDAR person F1 is 0.626. Road data stands
+    in for a real site.
+  tags: [YOLO11, Open3D, LiDAR]
+  demo: https://huggingface.co/spaces/haroonx02/construction-ppe-browser
+  demo_note: PPE check on worker photos with a 3.3 MB INT8 model
+  media:
+    source: assets/demo.gif
+    alt: Bird's-eye LiDAR view with coloured zones beside the front camera
+
+- repo: multiview-3d-reconstruction-blender
+  title: Multi-view 3D reconstruction
+  area: Robotics
+  size: small
+  summary: >-
+    Photos to cameras to a mesh to a Blender render, with Structure-from-Motion written
+    from scratch and compared with COLMAP.
+  metric: 0.21–0.85 cm
+  metric_label: median camera error on the three ETH3D scenes it fully registers
+  caveat: >-
+    COLMAP is 15 to 100 times faster, and on the meadow scene mine registers 6 of 15 images
+    against 14.
+  tags: [SfM, COLMAP, Blender]
+  media:
+    source: assets/temple_turntable.gif
+    alt: Turntable render of a reconstructed temple model
+
+- repo: robotics-docs-rag
+  title: Ask the ROS 2 docs
+  area: LLMs and voice
+  size: small
+  summary: >-
+    RAG over the ROS 2 documentation: three chunkers, hybrid search, reranking and answers
+    with citations, scored on a hand-built question set.
+  metric: "0.690"
+  metric_label: MRR@10 with section chunks, hybrid search and reranking
+  compare: BM25 baseline 0.454
+  caveat: >-
+    These are retrieval scores. Answer quality needs an Anthropic API key and has not been
+    measured.
+  tags: [Chroma, BM25, FastAPI]
+  media:
+    source: assets/chat_ui_retrieval_only.jpg
+    alt: Chat interface listing retrieved documentation passages
+    position: top
+
+- repo: lane-detection-classical-vs-deep
+  title: Lane detection, classical vs deep
+  area: Computer vision
+  size: large
+  summary: >-
+    The same problem solved twice, with a hand-built OpenCV pipeline and a U-Net, and
+    scored head to head on the full TuSimple test set.
+  metric: "0.951"
+  metric_label: ego-lane accuracy, U-Net
+  compare: Classical 0.773
+  caveat: >-
+    Neither method holds up off-domain. On a different camera the classical pipeline
+    locks onto a seam and the network gives unstable curves.
+  tags: [OpenCV, U-Net, ONNX]
+  demo: https://huggingface.co/spaces/haroonx02/lane-detection-browser
+  demo_note: U-Net and lane fit running on your own device
+  media:
+    source: assets/classical_project_video.gif
+    alt: Dashcam video with the detected lane area, curvature and offset drawn on it
+
+- repo: polyp-segmentation-unet
+  title: Polyp segmentation
+  area: Computer vision
+  size: medium
+  summary: >-
+    Colon polyp segmentation on Kvasir-SEG with MC-dropout uncertainty maps, checked
+    against the model's own errors. A learning project, not for clinical use.
+  metric: "0.904"
+  metric_label: mean Dice on 100 held-out images
+  compare: Uncertainty AUROC 0.930
+  caveat: >-
+    Trained on images from a single hospital. Most errors are misses, and some are
+    confident ones the uncertainty map doesn't flag.
+  tags: [U-Net, MC dropout, ONNX]
+  demo: https://huggingface.co/spaces/haroonx02/polyp-segmentation-browser
+  demo_note: Segmentation with a live uncertainty map
+  media:
+    source: reports/gallery_test.jpg
+    alt: Endoscopy test images with ground truth, prediction, error and uncertainty maps
+    position: top
+
+- repo: satellite-landuse-multispectral
+  title: Satellite land use and change
+  area: Computer vision
+  size: small
+  summary: >-
+    Land use from all 13 Sentinel-2 bands with a band-ablation study, and building change
+    detection with a Siamese U-Net.
+  metric: "0.890"
+  metric_label: change-detection F1 on LEVIR-CD
+  compare: EuroSAT accuracy 0.987, RGB 0.983
+  caveat: >-
+    A CNN gets most of the way from RGB alone, and the random EuroSAT split flatters every
+    model.
+  tags: [Sentinel-2, ResNet-18, ONNX]
+  demo: https://huggingface.co/spaces/haroonx02/satellite-landuse-browser
+  demo_note: 13-band land use and building change detection
+  media:
+    source: reports/cd_gallery.jpg
+    alt: Before and after aerial tiles with predicted building changes
+
+- repo: face-recognition-antispoofing
+  title: Face recognition and anti-spoofing
+  area: Computer vision
+  size: small
+  summary: >-
+    Verification and open-set identification on LFW, plus a presentation-attack detector
+    and a head-turn liveness challenge.
+  metric: 99.55 %
+  metric_label: LFW verification accuracy
+  compare: Anti-spoofing test EER 8.2–15.1 %
+  caveat: >-
+    Anti-spoofing validation error was only 1.5 to 1.7 %, because that split leaks people.
+    No demographic-bias evaluation.
+  tags: [ArcFace, YuNet, ONNX]
+  demo: https://huggingface.co/spaces/haroonx02/face-antispoofing-browser
+  demo_note: Anti-spoofing on your own webcam
+  media:
+    source: reports/lfw/roc.png
+    alt: ROC curves for aligned and unaligned face crops on LFW
+    fit: contain
+
+- repo: hand-gesture-control
+  title: Hand gesture control
+  area: Computer vision
+  size: small
+  summary: >-
+    A touchless mouse, slide remote and air-drawing whiteboard, driven by real-time hand
+    tracking and a classifier trained on your own recordings.
+  metric: 8 ms
+  metric_label: hand tracking per frame on an Apple M5 CPU
+  caveat: >-
+    No accuracy figures yet, because the gesture dataset hasn't been recorded.
+  tags: [MediaPipe, One Euro filter, MLP]

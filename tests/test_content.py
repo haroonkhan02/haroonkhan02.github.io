@@ -30,6 +30,7 @@ def test_parses_a_project():
     "overrides",
     [
         {"size": "huge"},
+        {"metric": 0.69},
         {"unexpected": 1},
         {"media": {"source": "a.gif", "alt": ""}},
         {"media": {"source": "a.gif", "alt": "x", "fit": "stretch"}},

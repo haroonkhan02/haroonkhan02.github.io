@@ -1,0 +1,29 @@
+name: Haroon Khan
+full_name: Muhammad Haroon Khan
+role: AI / Machine Learning Engineer
+location: Paris, France
+headline: I build vision and robotics systems, then measure where they fail.
+intro: >-
+  M.Sc. Computer Vision & Robotics (ViBOT), based in Paris. I build practical AI systems,
+  from research and experimentation through to deployment, and I care about measuring them
+  honestly: held-out test sets, baselines, and a clear note on where each one fails.
+about: >-
+  Each project here is its own repository with tests, CI, a reproducible pipeline and a
+  results section. Every card shows the headline number next to its main limitation,
+  because the limitation is usually the more useful thing to know.
+skills:
+  Languages: [Python, SQL, C++, JavaScript]
+  ML and vision: [PyTorch, Scikit-learn, OpenCV, Transformers, Ultralytics YOLO, Open3D]
+  Generative AI: [LLMs, RAG, Embeddings, Vector databases, Agentic workflows, Voice agents]
+  Backend: [FastAPI, Flask, REST APIs]
+  MLOps and cloud: [Docker, GitHub Actions, MLflow, AWS]
+links:
+  - label: GitHub
+    handle: haroonkhan02
+    url: https://github.com/haroonkhan02
+  - label: LinkedIn
+    handle: haroonkhan01
+    url: https://www.linkedin.com/in/haroonkhan01
+  - label: Hugging Face
+    handle: haroonx02
+    url: https://huggingface.co/haroonx02

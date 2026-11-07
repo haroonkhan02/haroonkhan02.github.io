@@ -82,6 +82,10 @@ def parse_project(raw: dict) -> Project:
             data["media"] = _build(Media, data["media"], f"{where} media")
         data["tags"] = tuple(data.get("tags", ()))
     project = _build(Project, data, where)
+    # An unquoted `metric: 0.690` would load as the float 0.69 and lose its trailing zero.
+    for name in ("metric", "metric_label", "summary", "compare", "caveat", "demo_note"):
+        if not isinstance(getattr(project, name), str):
+            raise ContentError(f"{where}: {name} must be a string, quote it in the YAML")
     if project.size not in SPANS:
         raise ContentError(f"{where}: size must be one of {sorted(SPANS)}")
     if project.media and project.media.fit not in FITS:
