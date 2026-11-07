@@ -8,6 +8,8 @@ published number checked against the project it came from.
 [![CI](https://github.com/haroonkhan02/haroonkhan02.github.io/actions/workflows/ci.yml/badge.svg)](https://github.com/haroonkhan02/haroonkhan02.github.io/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+**[haroonkhan02.github.io](https://haroonkhan02.github.io/)**
+
 </div>
 
 Work in progress. The home page works: twelve project cards with results and limitations,
