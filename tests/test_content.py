@@ -31,6 +31,7 @@ def test_parses_a_project():
     [
         {"size": "huge"},
         {"metric": 0.69},
+        {"media": {"source": "a.gif", "alt": "x", "frame": 1.5}},
         {"unexpected": 1},
         {"media": {"source": "a.gif", "alt": ""}},
         {"media": {"source": "a.gif", "alt": "x", "fit": "stretch"}},

@@ -13,7 +13,7 @@ import yaml
 
 GRID_COLUMNS = 12
 SPANS = {"large": 7, "medium": 5, "small": 4}
-FITS = {"cover", "contain"}
+FITS = {"cover", "contain", "native"}
 DEMO_PREFIX = "https://huggingface.co/spaces/"
 
 
@@ -27,6 +27,7 @@ class Media:
     alt: str
     fit: str = "cover"
     position: str = "center"
+    frame: float = 0.5  # where in an animation the poster is taken, from 0 to 1
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,8 @@ def parse_project(raw: dict) -> Project:
         raise ContentError(f"{where}: size must be one of {sorted(SPANS)}")
     if project.media and project.media.fit not in FITS:
         raise ContentError(f"{where}: media fit must be one of {sorted(FITS)}")
+    if project.media and not 0 <= project.media.frame <= 1:
+        raise ContentError(f"{where}: media frame must be between 0 and 1")
     if project.media and not project.media.alt.strip():
         raise ContentError(f"{where}: media needs alt text")
     if project.demo and not project.demo.startswith(DEMO_PREFIX):

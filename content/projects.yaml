@@ -18,7 +18,9 @@
   tags: [MuJoCo, PyTorch, ACT]
   media:
     source: assets/rollouts.gif
-    alt: Simulated robot arms picking up cubes and placing them on goal markers
+    alt: Side-by-side rollouts where the plain MLP stalls at the cube and ACT places it on the goal
+    fit: native
+    frame: 0.85
 
 - repo: visual-odometry-slam
   title: Visual odometry and SLAM
