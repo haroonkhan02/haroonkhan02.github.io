@@ -51,13 +51,16 @@ def remote_reader(repo: str) -> str:
         return response.read().decode("utf-8")
 
 
-def url_status(url: str) -> int:
+def url_status(url: str, opener: Callable = urllib.request.urlopen) -> int:
+    """HTTP status of a URL, or 0 when the request fails without one (timeout, DNS, TLS)."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with opener(request, timeout=30) as response:
             return response.status
     except urllib.error.HTTPError as exc:
         return exc.code
+    except (urllib.error.URLError, TimeoutError, ConnectionError):
+        return 0
 
 
 def verify(
@@ -94,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
         urls = [url for p in projects for url in (p.url, p.demo) if url]
         broken = [(url, status) for url in urls if (status := url_status(url)) != 200]
         for url, status in broken:
-            print(f"{url}: HTTP {status}")
+            print(f"{url}: {f'HTTP {status}' if status else 'no response'}")
 
     print(f"{len(projects)} projects and pages checked, {len(problems)} with unbacked numbers")
     return 1 if problems or broken else 0

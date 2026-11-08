@@ -3,7 +3,14 @@ from pathlib import Path
 import pytest
 
 from portfolio_site.content import load_pages, load_projects, parse_page, parse_project
-from portfolio_site.verify import local_reader, main, missing_numbers, numbers_in, verify
+from portfolio_site.verify import (
+    local_reader,
+    main,
+    missing_numbers,
+    numbers_in,
+    url_status,
+    verify,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = """
@@ -107,3 +114,10 @@ def test_every_shipped_project_has_a_page():
     projects = load_projects(ROOT / "content" / "projects.yaml")
     pages = load_pages(ROOT / "content" / "pages", projects)
     assert set(pages) == {p.repo for p in projects}
+
+
+def test_a_link_that_times_out_is_reported_not_raised():
+    def opener(request, timeout):
+        raise TimeoutError("The read operation timed out")
+
+    assert url_status("https://example.org", opener) == 0

@@ -76,7 +76,7 @@ src/portfolio_site/
   build.py              site-build: renders the home page, project pages, 404 and sitemap
 templates/              Jinja2 templates (home, project page, 404, shared nav and footer)
 static/                 CSS, a small progressive-enhancement script, fonts, media
-tests/                  71 tests: content rules, number check, media, rendered HTML
+tests/                  72 tests: content rules, number check, media, rendered HTML
 .github/workflows/ci.yml  lint and tests on 3.10–3.12, then verify, build and deploy to Pages
 ```
 
