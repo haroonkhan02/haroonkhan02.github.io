@@ -1,0 +1,93 @@
+{% extends "base.html.j2" %}
+{% set p = card.project %}
+{% block title %}{{ p.title }} · {{ profile.name }}{% endblock %}
+{% block description %}{{ p.summary }}{% endblock %}
+{% block canonical %}{{ site_url.rstrip("/") }}{{ p.page_url }}{% endblock %}
+{% block body %}
+<a class="skip" href="#content">Skip to content</a>
+{% with home = "/" %}{% include "_nav.html.j2" %}{% endwith %}
+
+<main id="content">
+  <header class="hero hero--project wrap">
+    <p class="eyebrow">{{ p.area }}</p>
+    <h1>{{ p.title }}</h1>
+    <p class="lede">{{ p.summary }}</p>
+    <p class="card__links project__links">
+      <a href="{{ p.url }}">Code on GitHub</a>
+      {% if p.demo %}<a href="{{ p.demo }}">Live demo</a>{% endif %}
+    </p>
+  </header>
+
+  {% if card.poster %}
+  <figure class="wrap figure">
+    <div class="figure__media"{% if card.video %} data-autoplay="{{ card.video }}"{% endif %}>
+      <img src="{{ card.poster }}" width="{{ card.width }}" height="{{ card.height }}" alt="{{ p.media.alt }}" decoding="async">
+    </div>
+  </figure>
+  {% endif %}
+
+  <div class="wrap project">
+    <aside class="project__key">
+      <div class="result">
+        <p class="result__value">{{ p.metric }}</p>
+        <p class="result__label">{{ p.metric_label }}{% if p.compare %}<span>{{ p.compare }}</span>{% endif %}</p>
+      </div>
+      <p class="caveat"><span>Limitation</span> {{ p.caveat }}</p>
+      <ul class="tags" aria-label="Tools">
+        {% for tag in p.tags %}<li>{{ tag }}</li>{% endfor %}
+      </ul>
+    </aside>
+
+    <div class="prose">
+      <section aria-labelledby="problem">
+        <h2 id="problem">The problem</h2>
+        <p>{{ page.problem }}</p>
+      </section>
+
+      <section aria-labelledby="approach">
+        <h2 id="approach">What I built</h2>
+        <ol class="steps">
+          {% for step in page.approach %}<li>{{ step }}</li>{% endfor %}
+        </ol>
+      </section>
+
+      <section aria-labelledby="results">
+        <h2 id="results">Results</h2>
+        <div class="table">
+          <table>
+            <caption>{{ page.results.caption }}</caption>
+            <thead><tr>{% for cell in page.results.header %}<th scope="col">{{ cell }}</th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for row in page.results.body %}
+              <tr>{% for cell in row %}{% if loop.first %}<th scope="row">{{ cell }}</th>{% else %}<td>{{ cell }}</td>{% endif %}{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="findings">
+        <h2 id="findings">What the results show</h2>
+        <ul class="points">
+          {% for item in page.findings %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section aria-labelledby="limits">
+        <h2 id="limits">Limitations</h2>
+        <ul class="points">
+          {% for item in page.limitations %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+        <p class="more">Full results, commands and figures are in the <a href="{{ p.url }}">repository README</a>.</p>
+      </section>
+    </div>
+  </div>
+
+  <nav class="wrap pager" aria-label="Other projects">
+    <a href="{{ prev.project.page_url }}"><span>Previous</span>{{ prev.project.title }}</a>
+    <a href="{{ next.project.page_url }}"><span>Next</span>{{ next.project.title }}</a>
+  </nav>
+</main>
+
+{% include "_footer.html.j2" %}
+{% endblock %}

@@ -44,3 +44,22 @@ if (!calm && !saveData && matchMedia("(hover: hover)").matches) {
     });
   }
 }
+
+// On a project page, play the clip once the figure is on screen, unless motion is reduced.
+const figure = document.querySelector("[data-autoplay]");
+if (figure && !calm && !saveData && "IntersectionObserver" in window) {
+  const observer = new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) return;
+    observer.disconnect();
+    const video = document.createElement("video");
+    video.src = figure.dataset.autoplay;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute("aria-hidden", "true");
+    video.addEventListener("playing", () => figure.classList.add("playing"));
+    figure.append(video);
+    video.play().catch(() => {});
+  });
+  observer.observe(figure);
+}

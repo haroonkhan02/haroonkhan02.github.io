@@ -11,7 +11,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 from PIL import Image
 
-from portfolio_site.content import Project, load_profile, load_projects
+from portfolio_site.content import Project, load_pages, load_profile, load_projects
 
 SITE_URL = "https://haroonkhan02.github.io/"
 
@@ -38,8 +38,8 @@ def make_card(project: Project, media_dir: Path) -> Card:
     video = media_dir / f"{project.repo}.mp4"
     return Card(
         project,
-        poster=f"media/{poster.name}",
-        video=f"media/{video.name}" if video.exists() else "",
+        poster=f"/media/{poster.name}",
+        video=f"/media/{video.name}" if video.exists() else "",
         width=width,
         height=height,
     )
@@ -48,6 +48,7 @@ def make_card(project: Project, media_dir: Path) -> Card:
 def render(root: Path, out: Path) -> list[Path]:
     """Build the whole site from `root` into `out` and return the pages written."""
     projects = load_projects(root / "content" / "projects.yaml")
+    pages = load_pages(root / "content" / "pages", projects)
     profile = load_profile(root / "content" / "profile.yaml")
     cards = [make_card(project, root / "static" / "media") for project in projects]
 
@@ -70,12 +71,38 @@ def render(root: Path, out: Path) -> list[Path]:
     shutil.copytree(root / "static", out)
     (out / ".nojekyll").touch()
 
-    pages = []
+    written = []
     for template, name in (("index.html.j2", "index.html"), ("404.html.j2", "404.html")):
         page = out / name
         page.write_text(env.get_template(template).render(context), encoding="utf-8")
-        pages.append(page)
-    return pages
+        written.append(page)
+
+    project_template = env.get_template("project.html.j2")
+    for i, card in enumerate(cards):
+        page = out / card.project.page_url.strip("/") / "index.html"
+        page.parent.mkdir(parents=True, exist_ok=True)
+        html = project_template.render(
+            context,
+            card=card,
+            page=pages[card.project.repo],
+            prev=cards[i - 1],
+            next=cards[(i + 1) % len(cards)],
+        )
+        page.write_text(html, encoding="utf-8")
+        written.append(page)
+
+    (out / "sitemap.xml").write_text(sitemap(projects), encoding="utf-8")
+    return written
+
+
+def sitemap(projects: list[Project]) -> str:
+    urls = [SITE_URL] + [SITE_URL.rstrip("/") + p.page_url for p in projects]
+    entries = "".join(f"  <url><loc>{url}</loc></url>\n" for url in urls)
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{entries}</urlset>\n"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

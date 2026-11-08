@@ -18,6 +18,7 @@ class Page(HTMLParser):
     def __init__(self):
         super().__init__()
         self.images, self.links, self.ids, self.assets, self.h1 = [], [], set(), [], 0
+        self.canonical = ""
 
     def handle_starttag(self, tag, attrs):
         attr = dict(attrs)
@@ -28,7 +29,9 @@ class Page(HTMLParser):
             self.assets.append(attr["src"])
         if tag == "a":
             self.links.append(attr["href"])
-        if tag in ("link", "script") and (attr.get("href") or attr.get("src")):
+        if tag == "link" and attr.get("rel") == "canonical":
+            self.canonical = attr["href"]
+        elif tag in ("link", "script") and (attr.get("href") or attr.get("src")):
             self.assets.append(attr.get("href") or attr.get("src"))
         if tag == "h1":
             self.h1 += 1

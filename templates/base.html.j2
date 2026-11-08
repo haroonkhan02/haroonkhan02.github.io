@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %}</title>
-  <meta name="description" content="{{ profile.role }} in {{ profile.location }}. Computer vision, robotics and applied ML projects with tests, baselines and stated limitations.">
+  <meta name="description" content="{% block description %}{{ profile.role }} in {{ profile.location }}. Computer vision, robotics and applied ML projects with tests, baselines and stated limitations.{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ site_url }}{% endblock %}">
   <meta name="theme-color" content="#f3f3f0" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1012" media="(prefers-color-scheme: dark)">
   <link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>

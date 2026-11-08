@@ -2,12 +2,7 @@
 {% block title %}{{ profile.name }} · {{ profile.role }}{% endblock %}
 {% block body %}
 <a class="skip" href="#work">Skip to projects</a>
-<nav class="nav" aria-label="Main">
-  <a class="nav__name" href="#top">{{ profile.name }}</a>
-  <a href="#work">Work</a>
-  <a href="#demos">Demos</a>
-  <a href="#about">About</a>
-</nav>
+{% with home = "" %}{% include "_nav.html.j2" %}{% endwith %}
 
 <main id="top">
   <header class="hero wrap">
@@ -37,7 +32,7 @@
           {% endif %}
           <div class="card__body">
             <p class="card__area">{{ p.area }}</p>
-            <h3><a href="{{ p.url }}">{{ p.title }}</a></h3>
+            <h3><a href="{{ p.page_url }}">{{ p.title }}</a></h3>
             <p class="card__summary">{{ p.summary }}</p>
             <div class="result">
               <p class="result__value">{{ p.metric }}</p>
@@ -48,6 +43,7 @@
               {% for tag in p.tags %}<li>{{ tag }}</li>{% endfor %}
             </ul>
             <p class="card__links">
+              <a href="{{ p.page_url }}">Details</a>
               <a href="{{ p.url }}">Code</a>
               {% if p.demo %}<a href="{{ p.demo }}">Live demo</a>{% endif %}
             </p>
@@ -94,8 +90,5 @@
   </section>
 </main>
 
-<footer class="wrap footer">
-  <p>© 2026 {{ profile.full_name }}</p>
-  <p><a href="https://github.com/haroonkhan02/haroonkhan02.github.io">Source of this site</a></p>
-</footer>
+{% include "_footer.html.j2" %}
 {% endblock %}
