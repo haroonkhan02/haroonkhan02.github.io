@@ -1,0 +1,46 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Controlling a computer with hand gestures sounds like a classification problem, but
+  most of the work is elsewhere. A cursor has to be steady without lagging, and a single
+  misread frame must not fire a click. I built a gesture mouse, a slide remote and an
+  air-drawing whiteboard on top of webcam hand tracking.
+approach:
+  - >-
+    MediaPipe Hand Landmarker gives 21 3D landmarks per frame. They are shifted to the
+    wrist, left hands are mirrored and everything is scaled by palm size, so a classifier
+    sees shape rather than position.
+  - >-
+    Six static gestures are recognised by a rule-based baseline or by an MLP trained on
+    the user's own recordings, with a session-level train/test split.
+  - >-
+    A gesture must hold for several frames before it becomes active, and low-confidence
+    frames return no gesture.
+  - >-
+    The cursor follows the index knuckle through a One Euro filter, and a mode controller
+    switches between mouse, slides and drawing.
+results:
+  caption: Per-frame latency from gesture-benchmark on an Apple M5 CPU; gesture accuracy is not measured yet.
+  rows:
+    - ["Stage", "Time per frame"]
+    - ["Hand tracking (MediaPipe)", "about 8 ms"]
+    - ["Gesture classification", "under 0.1 ms"]
+    - ["Gesture accuracy", "not measured yet"]
+findings:
+  - >-
+    The frame rate is limited by the camera, not by tracking or classification.
+  - >-
+    Following the knuckle instead of the fingertip matters for clicks: pinching moves the
+    fingertip, while the knuckle stays where you aimed.
+  - >-
+    The One Euro filter smooths heavily when the hand is still and lightly when it moves
+    fast, which removes jitter without adding visible lag.
+  - >-
+    Consecutive frames are near-duplicates, so a random split would leak them into the
+    test set. Holding out each gesture's latest session tests a new recording instead.
+limitations:
+  - >-
+    No accuracy numbers until a gesture dataset is recorded, and a model trained on one
+    person's hand may not transfer to others.
+  - >-
+    Static, one-hand gestures only. Dynamic or two-hand gestures would need a temporal
+    model over landmark sequences.

@@ -1,0 +1,52 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Face verification on LFW is close to saturated, so a high accuracy there says little.
+  The more useful questions sit around it: what face alignment is worth, what changes
+  when one comparison becomes a search over a whole gallery, and whether an
+  anti-spoofing model's validation score holds on unseen people.
+approach:
+  - >-
+    Detection with OpenCV YuNet, my own Umeyama alignment to the ArcFace 5-point template,
+    and ArcFace (512-d) or SFace (128-d) embeddings. The gallery stores embeddings only.
+  - >-
+    Scored verification with the LFW 10-fold protocol on 6,000 pairs, with aligned crops
+    and with plain detector boxes.
+  - >-
+    Ran open-set identification with one photo each of 1,680 people enrolled, 7,484
+    probes of those people and 4,069 photos of strangers.
+  - >-
+    Trained a ResNet-18 presentation-attack detector on a CelebA-Spoof subset with the
+    threshold fixed on validation, and added a randomised head-turn liveness challenge.
+results:
+  caption: LFW verification on 6,000 pairs (10-fold); only the face crop differs between rows of the same embedder.
+  rows:
+    - ["Embedder", "Crop", "Accuracy", "EER", "TAR @ FAR 10⁻³"]
+    - ["ArcFace (512-d)", "5-point aligned", "99.55 % ± 0.34", "0.47 %", "99.37 %"]
+    - ["SFace (128-d)", "5-point aligned", "99.32 % ± 0.40", "0.80 %", "98.80 %"]
+    - ["ArcFace", "detector box", "95.23 % ± 0.79", "4.83 %", "72.03 %"]
+    - ["SFace", "detector box", "87.37 % ± 1.30", "12.60 %", "42.07 %"]
+findings:
+  - >-
+    Alignment is worth 4.3 points for ArcFace and 12 for SFace. At FAR 10⁻³ the
+    un-aligned crops reject 28 % and 58 % of genuine users.
+  - >-
+    A 1:1 threshold doesn't carry over to 1:N. The 0.25 threshold lets 43.4 % of
+    strangers through against 1,680 people; the app's 0.35 keeps that at 0.76 % while
+    still matching 98.17 % of known faces.
+  - >-
+    The spoof detector's validation EER is 1.5 to 1.7 % but test EER is 8 to 15 %. An
+    identity check explains it: 77 % of validation faces match a training identity,
+    against 22 % on test, so about a quarter of attacks get through.
+  - >-
+    The tightest crop tests best, but I kept the default chosen before testing, since
+    switching afterwards would be tuning on the test set.
+limitations:
+  - >-
+    With 3,000 impostor pairs, FAR 10⁻³ rests on 3 pairs, so those numbers are only
+    indicative.
+  - >-
+    The CelebA-Spoof mirror has no subject IDs or attack-type labels, so there is no
+    per-attack breakdown and no identity-disjoint validation yet.
+  - >-
+    LFW skews towards lighter-skinned, male public figures, and there is no
+    demographic-bias evaluation.

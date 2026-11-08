@@ -1,0 +1,50 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Visual odometry estimates a camera's path from its images, but every small pose error
+  adds up and the path drifts. Loop closure recognises places seen before and pulls the
+  path back. I wanted to measure how much it helps, and where the drift comes from in the
+  first place.
+approach:
+  - >-
+    Tracked ORB features spread over a 4×3 grid. RGB-D mode lifts keypoints to 3D with the
+    depth image and solves PnP against keyframes; monocular mode uses the essential matrix,
+    triangulation and a keyframe map.
+  - >-
+    Found loop candidates with a small bag of binary words (256 words), accepted them only
+    after a PnP check with 60 inliers, and spread the error around each loop with a pose
+    graph in SciPy.
+  - >-
+    Scored every run with ATE and RPE as defined by the TUM benchmark, and checked every
+    loop edge against ground truth.
+  - >-
+    Binned the error by how fast the camera turned and by distance travelled.
+results:
+  caption: ATE in cm against motion capture on four TUM RGB-D sequences.
+  rows:
+    - ["Sequence", "RGB-D odometry", "+ loop closure", "Monocular"]
+    - ["fr1_xyz", "4.8", "1.4", "10.8"]
+    - ["fr1_desk", "8.5", "2.9", "67.7"]
+    - ["fr1_room", "17.9", "8.8", "53.6"]
+    - ["fr3_long_office_household", "19.2", "7.6", "148.3"]
+findings:
+  - >-
+    Loop closure cut ATE by 51–70 % on every sequence. None of the 101 accepted loop edges
+    was a false match; each agrees with ground truth to within 5.2 cm and 3.2°.
+  - >-
+    It fixes accumulated drift, not local error: RPE per second is almost unchanged.
+  - >-
+    Fast rotation is the main source of error. RGB-D odometry error grows from 1.3 cm in
+    slow windows to 4.7 cm above 40° per second, and monocular tracking is badly wrong in
+    88 % of the fastest windows.
+  - >-
+    Keyframes matter: on fr3 they mean 260 reference switches instead of 2,488, and ATE
+    drops from 57.6 to 19.2 cm.
+limitations:
+  - >-
+    Loop closure runs once after tracking, and the pose graph corrects keyframe poses only,
+    with no full bundle adjustment.
+  - >-
+    Monocular parameters were tuned on fr1_xyz alone, and it loses tracking under fast
+    rotation.
+  - >-
+    Four indoor sequences only, with no driving data and no dynamic scenes.

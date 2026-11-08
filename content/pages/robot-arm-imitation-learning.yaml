@@ -1,0 +1,50 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Imitation learning teaches a robot from demonstrations instead of a reward. Action
+  Chunking with Transformers (ACT) is a popular recipe, but it bundles several ideas at
+  once: a transformer, a CVAE latent, predicting chunks of future actions and averaging
+  overlapping chunks. I wanted to know which of those parts actually makes it work.
+approach:
+  - >-
+    Built my own MuJoCo task: a 5-joint arm with a two-finger gripper picks a cube at a
+    random pose and places it on a random goal, controlled at 20 Hz.
+  - >-
+    Wrote a scripted expert with damped-least-squares IK. It produces 600 demonstrations,
+    and the policies only see observation-action pairs.
+  - >-
+    Trained a plain MLP and my own state-based ACT on the same data, and scored every run
+    on 300 unseen layouts.
+  - >-
+    Ran controls that change one thing at a time: memory, model size, chunk length,
+    ensembling, checkpoint choice, data size and execution noise.
+results:
+  caption: Success on 300 unseen layouts per run, three training seeds.
+  rows:
+    - ["Policy", "Parameters", "Mean success"]
+    - ["MLP, next action only", "137k", "0.1 %"]
+    - ["MLP, chunk 20 + ensembling", "166k", "87.3 %"]
+    - ["ACT, chunk 20 + ensembling", "1.3M", "99.0 %"]
+    - ["ACT, newest chunk only", "1.3M", "31.2 %"]
+    - ["ACT, final epoch", "1.3M", "8.9 %"]
+findings:
+  - >-
+    The plain MLP has the lowest validation error of all policies and solves almost
+    nothing. After the gripper closes, the expert waits 8 steps while the state barely
+    changes, and a policy without memory stalls there.
+  - >-
+    Most of the gain comes from predicting chunks and averaging them. A 166k-parameter MLP
+    with chunking and ensembling gets close to ACT.
+  - >-
+    Ensembling matters most: the same ACT models using only the newest chunk drop to
+    1–84 % depending on the seed.
+  - >-
+    ACT's CVAE latent is unused (KL 0.000), which fits a deterministic expert.
+limitations:
+  - >-
+    ACT's 99 % depends on the checkpoint. Validation error is lowest near epoch 13 of 50,
+    and the final-epoch weights reach the goal only 8.9 % of the time.
+  - >-
+    Policies see the true cube pose, so this says little about vision or real robots.
+  - >-
+    The idea that older chunks act as memory during the wait is an inference I haven't
+    tested directly.

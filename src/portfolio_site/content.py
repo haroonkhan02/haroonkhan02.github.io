@@ -51,6 +51,10 @@ class Project:
         return f"https://github.com/haroonkhan02/{self.repo}"
 
     @property
+    def page_url(self) -> str:
+        return f"/projects/{self.repo}/"
+
+    @property
     def span(self) -> int:
         return SPANS[self.size]
 
@@ -126,6 +130,91 @@ def load_projects(path: Path) -> list[Project]:
         raise ContentError(f"duplicate projects: {duplicates}")
     check_grid(projects)
     return projects
+
+
+@dataclass(frozen=True)
+class Results:
+    caption: str
+    rows: tuple[tuple[str, ...], ...]  # the first row is the header
+
+    @property
+    def header(self) -> tuple[str, ...]:
+        return self.rows[0]
+
+    @property
+    def body(self) -> tuple[tuple[str, ...], ...]:
+        return self.rows[1:]
+
+
+@dataclass(frozen=True)
+class Page:
+    """The longer write-up shown on a project's own page."""
+
+    problem: str
+    approach: tuple[str, ...]
+    results: Results
+    findings: tuple[str, ...]
+    limitations: tuple[str, ...]
+
+    @property
+    def claims(self) -> list[str]:
+        cells = [cell for row in self.results.rows for cell in row]
+        return [
+            self.problem,
+            *self.approach,
+            self.results.caption,
+            *cells,
+            *self.findings,
+            *self.limitations,
+        ]
+
+
+def _strings(value, where: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or not value:
+        raise ContentError(f"{where}: expected a non-empty list")
+    if not all(isinstance(item, str) and item.strip() for item in value):
+        raise ContentError(f"{where}: every item must be a non-empty string, quote numbers")
+    return tuple(value)
+
+
+def parse_page(raw: dict, repo: str) -> Page:
+    where = f"page {repo}"
+    if not isinstance(raw, dict):
+        raise ContentError(f"{where}: expected a mapping")
+    data = dict(raw)
+    if not isinstance(data.get("problem"), str):
+        raise ContentError(f"{where}: problem must be a paragraph of text")
+    for name in ("approach", "findings", "limitations"):
+        data[name] = _strings(data.get(name), f"{where} {name}")
+    table = data.get("results")
+    if not isinstance(table, dict) or set(table) != {"caption", "rows"}:
+        raise ContentError(f"{where}: results must have a caption and rows, nothing else")
+    rows = table.get("rows")
+    if not isinstance(rows, list) or len(rows) < 2:
+        raise ContentError(f"{where}: results need a header row and at least one data row")
+    rows = tuple(_strings(row, f"{where} results row {i}") for i, row in enumerate(rows))
+    if len({len(row) for row in rows}) != 1:
+        raise ContentError(f"{where}: every results row needs the same number of cells")
+    data["results"] = _build(
+        Results, {"caption": table.get("caption"), "rows": rows}, f"{where} results"
+    )
+    if not isinstance(data["results"].caption, str):
+        raise ContentError(f"{where}: results caption must be text")
+    return _build(Page, data, where)
+
+
+def load_pages(directory: Path, projects: list[Project]) -> dict[str, Page]:
+    """Load one page per project. A missing or orphaned page file is an error."""
+    files = {path.stem: path for path in directory.glob("*.yaml")}
+    repos = {project.repo for project in projects}
+    if missing := sorted(repos - set(files)):
+        raise ContentError(f"no page for {missing}")
+    if extra := sorted(set(files) - repos):
+        raise ContentError(f"pages without a project: {extra}")
+    return {
+        repo: parse_page(yaml.safe_load(files[repo].read_text(encoding="utf-8")), repo)
+        for repo in sorted(repos)
+    }
 
 
 def load_profile(path: Path) -> dict:

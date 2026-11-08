@@ -1,0 +1,51 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Lane keeping needs to know where the two lines around the car are, and a hand-tuned
+  OpenCV pipeline can often find them. Deep networks are the default now, but the
+  comparison is rarely made on equal terms. I built both, gave them the same output
+  format and scored them once on the same test set to see where each one wins and fails.
+approach:
+  - >-
+    Classical pipeline: chessboard calibration, a bird's-eye homography, colour and
+    gradient thresholds, sliding windows and a polynomial fit per lane. Its parameters
+    are grid-searched on 1,000 training images.
+  - >-
+    A U-Net with a pretrained ResNet-34 encoder that labels each pixel with its lane slot,
+    trained with weighted cross-entropy plus Dice because lane pixels are about 2 % of the
+    image. The checkpoint is picked on validation accuracy.
+  - >-
+    Both detectors feed the same TuSimple metric, curvature and offset measurement and
+    lane-departure warning, and are scored once on the full test set.
+  - >-
+    Exported the network to ONNX (FP32, FP16, INT8) and CoreML, re-scored every variant,
+    and ported the post-processing to JavaScript so the INT8 model runs in the browser.
+results:
+  caption: TuSimple accuracy, false positives and false negatives on the full test set of 2,782 images.
+  rows:
+    - ["Method", "Ego acc", "Ego FP", "Ego FN", "All-lanes acc", "ms / frame"]
+    - ["Classical, tuned on train", "0.773", "0.330", "0.395", "0.541", "9.8"]
+    - ["U-Net ResNet-34", "0.951", "0.053", "0.051", "0.950", "20.7"]
+findings:
+  - >-
+    On its home domain the network cuts false positives and negatives from 33–40 % to
+    about 5 %. Most classical failures are faint dashes and Botts' dots that fixed
+    thresholds can't see.
+  - >-
+    The classical pipeline is twice as fast, needs no training data, and every failure
+    can be traced in its debug views.
+  - >-
+    More data helped the network more than more epochs: a model trained on a 233-image
+    subset for 60 epochs reached 0.914 ego accuracy on that subset's own test split.
+  - >-
+    INT8 costs 0.001 ego accuracy at a quarter of the size. CoreML FP16 moves lane points
+    by a median 8 px, still inside TuSimple's 20 px tolerance.
+limitations:
+  - >-
+    Neither method holds up off-domain. On Udacity's challenge video the classical
+    pipeline follows an asphalt seam, and the network gives unstable curves and a false
+    departure warning.
+  - >-
+    The departure warning uses a homography calibrated on straight road, so tight bends
+    can trigger false warnings.
+  - >-
+    Daytime highway data only, and no temporal smoothing of the network output in video.

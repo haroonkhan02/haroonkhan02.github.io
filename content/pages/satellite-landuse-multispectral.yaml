@@ -1,0 +1,53 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Sentinel-2 records 13 spectral bands, but most vision models only see RGB. I wanted to
+  know how much the other bands add once a CNN already has spatial context, and whether
+  they help more when labels are scarce. The second half asks a related question for
+  change detection: can raw pixel differences find new buildings, or does it take a
+  learned model?
+approach:
+  - >-
+    Rebuilt the first layer of an ImageNet ResNet-18 for any number of bands: the RGB
+    bands keep their filters and every other band starts from their mean.
+  - >-
+    Ran a band ablation on one fixed split of 27,000 EuroSAT patches: 9 band sets, a
+    random forest that sees only per-band statistics, and 1 %/10 %/100 % label budgets.
+  - >-
+    Trained a Siamese U-Net with a shared ResNet-18 encoder on LEVIR-CD. The decoder gets
+    the absolute feature difference of the two dates, so unchanged content cancels.
+  - >-
+    Compared it with Change Vector Analysis, once with Otsu per tile and once with a
+    threshold tuned on validation, and exported both models to ONNX and CoreML.
+results:
+  caption: EuroSAT test accuracy and macro F1 on 5,400 patches, one seed per configuration.
+  rows:
+    - ["Model", "Bands", "Test accuracy", "Macro F1"]
+    - ["Random forest", "RGB", "0.797", "0.789"]
+    - ["Random forest", "all 13", "0.910", "0.905"]
+    - ["ResNet-18", "RGB", "0.983", "0.982"]
+    - ["ResNet-18", "10 non-visible bands only", "0.983", "0.982"]
+    - ["ResNet-18", "all 13", "0.987", "0.987"]
+findings:
+  - >-
+    Spectra and spatial context largely stand in for each other. Without spatial features
+    the extra bands are worth 11 points; with a CNN they add 0.4 points (91 vs. 68
+    errors, McNemar p = 0.02), mostly in vegetation classes.
+  - >-
+    I expected extra bands to help more with few labels, and they didn't: RGB and all 13
+    both score 0.896 with 1 % of the labels.
+  - >-
+    For change detection the learned model reaches F1 0.890, while CVA stays at 0.117
+    even with a tuned threshold. Pixel differences can't tell buildings from seasons,
+    shadows or new roads.
+  - >-
+    Quantising raw 13-band input with one 8-bit scale zeroes the cirrus band and drops
+    accuracy to 0.866, so the input scaling stays in float.
+limitations:
+  - >-
+    EuroSAT's random split lets neighbouring patches of one field land in train and test,
+    which flatters every model. A geographic split would measure the leak.
+  - >-
+    One seed per configuration, and validation accuracy was still rising at epoch 8.
+  - >-
+    The LEVIR-CD mirror stores JPEGs, so the change results aren't a like-for-like
+    comparison with papers.

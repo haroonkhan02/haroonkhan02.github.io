@@ -2,10 +2,17 @@ from pathlib import Path
 
 import pytest
 
-from portfolio_site.content import load_projects, parse_project
+from portfolio_site.content import load_pages, load_projects, parse_page, parse_project
 from portfolio_site.verify import local_reader, main, missing_numbers, numbers_in, verify
 
 ROOT = Path(__file__).resolve().parents[1]
+PAGE = """
+problem: P
+approach: [A]
+results: {caption: C, rows: [[H], [x]]}
+findings: [F]
+limitations: [L]
+"""
 
 
 def project(**overrides):
@@ -66,9 +73,11 @@ def test_main_fails_on_unbacked_numbers(tmp_path, capsys):
 """,
         encoding="utf-8",
     )
+    (tmp_path / "pages").mkdir()
     for repo, text in {"demo": "nothing", "demo2": "1", "demo3": "1"}.items():
         (tmp_path / repo).mkdir()
         (tmp_path / repo / "README.md").write_text(text, encoding="utf-8")
+        (tmp_path / "pages" / f"{repo}.yaml").write_text(PAGE, encoding="utf-8")
     assert main(["--content", str(content), "--repos-dir", str(tmp_path)]) == 1
     assert "demo: not in README: 7.5" in capsys.readouterr().out
 
@@ -77,3 +86,24 @@ def test_shipped_content_is_valid():
     projects = load_projects(ROOT / "content" / "projects.yaml")
     assert len(projects) == 12
     assert sum(1 for p in projects if p.demo) == 5
+
+
+def test_page_numbers_are_checked_too():
+    page = parse_page(
+        {
+            "problem": "P",
+            "approach": ["A"],
+            "results": {"caption": "C", "rows": [["Seeds"], ["3"]]},
+            "findings": ["Took 7 min."],
+            "limitations": ["L"],
+        },
+        "demo",
+    )
+    readme = "480 demos, 99.0 % over 3 seeds"
+    assert missing_numbers(project(), readme, page) == ["7"]
+
+
+def test_every_shipped_project_has_a_page():
+    projects = load_projects(ROOT / "content" / "projects.yaml")
+    pages = load_pages(ROOT / "content" / "pages", projects)
+    assert set(pages) == {p.repo for p in projects}

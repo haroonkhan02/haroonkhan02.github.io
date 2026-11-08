@@ -1,0 +1,54 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Most of a RAG system's answer quality is decided at retrieval, yet chunking and search
+  choices are often made by feel. I built question answering over the ROS 2
+  documentation and three ROS 2 papers, and scored each retrieval choice on a question
+  set I wrote by hand.
+approach:
+  - >-
+    Ingested 296 ROS 2 doc pages with my own reStructuredText parser that keeps heading
+    paths and code blocks, plus three arXiv papers page by page.
+  - >-
+    Compared three chunkers (fixed windows, recursive, section-aware with a heading
+    prefix) against four retrieval modes: BM25, dense, reciprocal-rank fusion, and fusion
+    plus cross-encoder reranking.
+  - >-
+    Wrote 61 answerable and 5 unanswerable questions. A chunk counts as relevant if it
+    comes from a gold document and contains an answer phrase, so every chunker is scored
+    on equal terms.
+  - >-
+    Claude answers from the top five passages and cites every sentence or abstains,
+    behind a FastAPI backend, a chat UI, a CLI and a Dockerfile.
+results:
+  caption: Retrieval quality on the 61 answerable questions, with retrieval-only latency on an Apple M5.
+  rows:
+    - ["Chunking", "Retrieval", "Hit@1", "Hit@5", "MRR@10", "ms/query"]
+    - ["fixed (180 words)", "BM25", "0.279", "0.705", "0.454", "1"]
+    - ["fixed", "hybrid + rerank", "0.426", "0.803", "0.579", "176"]
+    - ["section + heading prefix", "dense", "0.459", "0.738", "0.596", "6"]
+    - ["section + heading prefix", "hybrid (RRF)", "0.426", "0.787", "0.574", "8"]
+    - ["section + heading prefix", "hybrid + rerank", "0.590", "0.803", "0.690", "159"]
+findings:
+  - >-
+    The reranker is what puts the right passage first. On section chunks it lifts Hit@1
+    from 0.426 to 0.590 while Hit@5 barely moves, so it reorders candidates that were
+    already in the list.
+  - >-
+    Section chunking beats fixed windows by 0.111 MRR only with the reranker (p = 0.007).
+    Without it no chunker difference is significant.
+  - >-
+    The embedding model matters for dense-only search, where BGE-small beats MiniLM by
+    0.18 MRR, but the gap vanishes under the reranker.
+  - >-
+    Even the best setup misses 7 of 61 questions in the top 10. The misses are mostly an
+    answer split across neighbouring chunks, a vocabulary gap, or a flattened PDF table.
+limitations:
+  - >-
+    61 questions give intervals of about ±0.10 on MRR, so only large differences are
+    detectable, and p-values aren't corrected for multiple comparisons.
+  - >-
+    I wrote the questions after reading the docs, so they favour facts stated clearly in
+    one place.
+  - >-
+    Answer quality needs an Anthropic API key. The judge is implemented but has not been
+    run, so there is no faithfulness or citation-accuracy number.

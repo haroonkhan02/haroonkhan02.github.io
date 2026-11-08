@@ -1,0 +1,53 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Most calls to a clinic are administrative: opening hours, bookings, cancellations. A few
+  are emergencies or requests for medical advice, and those must never depend on what a
+  language model decides. On a phone line the reply also has to come fast enough to feel
+  like a conversation.
+approach:
+  - >-
+    Connected a Twilio number through Media Streams to a FastAPI WebSocket, where Pipecat
+    runs speech-to-text, the agent and text-to-speech with turn detection and barge-in.
+  - >-
+    Put rule-based guardrails in front of the LLM. Emergencies get a fixed script and a
+    staff alert, and requests for diagnoses or doses are refused.
+  - >-
+    Gave Claude typed tools for FAQ search, free slots, booking, rescheduling, cancelling
+    and messages. A validating executor only books after the caller confirms the
+    read-back.
+  - >-
+    Supported Deepgram or offline Whisper and Kokoro, and wrote a fake-Twilio simulator
+    that calls the real server end to end.
+results:
+  caption: Guardrails and retrieval on small hand-written text sets, and simulated calls through the real server with synthetic voices.
+  rows:
+    - ["Check", "Set", "Result"]
+    - ["Emergency recall, rules", "25 dev lines", "1.00"]
+    - ["Emergency recall, rules", "20 held-out lines", "0.45"]
+    - ["False alarms on admin requests", "20 held-out", "0"]
+    - ["FAQ retrieval, own BM25", "36 caller questions", "Hit@1 0.83, Hit@3 0.94"]
+    - ["Simulated calls, Deepgram Flux + Aura", "20 calls", "20 / 20 right script, 0.79 s median"]
+    - ["Simulated calls, Whisper + Kokoro on the CPU", "20 calls", "19 / 20 right script, 2.24 s median"]
+findings:
+  - >-
+    The rules look perfect on the lines they were tuned on and miss more than half of new
+    emergencies, such as "I can't catch my breath". Keyword rules alone are not enough.
+  - >-
+    Speech is not the safety bottleneck. No Deepgram transcript changed a guardrail
+    decision (108 / 108), and errors cluster in names, birth dates and phone numbers,
+    which is why the agent reads them back.
+  - >-
+    Latency is mostly turn detection. Emergency statements wait about twice as long for
+    the end of turn as questions do (median 1.01 s vs 0.51 s).
+  - >-
+    A stricter end-of-turn threshold of 0.8 cuts early cut-offs from 5 to 3 of 108 lines
+    but adds about 0.25 s to the median reply, so it stays at 0.7.
+limitations:
+  - >-
+    The Claude conversation agent and its 13 scripted calls have not been run, because
+    they require an Anthropic API key. None of the numbers above measure the agent.
+  - >-
+    Medical-advice recall on held-out lines is only 0.47, and all test sets are small and
+    written by me.
+  - >-
+    Voices are synthetic and clean. Real callers bring accents, noise and panic.

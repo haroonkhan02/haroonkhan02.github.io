@@ -16,7 +16,7 @@ import urllib.request
 from collections.abc import Callable
 from pathlib import Path
 
-from portfolio_site.content import Project, load_projects
+from portfolio_site.content import Page, Project, load_pages, load_projects
 
 RAW_README = "https://raw.githubusercontent.com/haroonkhan02/{repo}/main/README.md"
 USER_AGENT = "portfolio-site-verify"
@@ -28,10 +28,11 @@ def numbers_in(text: str) -> set[str]:
     return set(NUMBER.findall(text))
 
 
-def missing_numbers(project: Project, readme: str) -> list[str]:
-    """Numbers claimed for a project that its README does not contain."""
+def missing_numbers(project: Project, readme: str, page: Page | None = None) -> list[str]:
+    """Numbers claimed for a project, on its card or page, that its README does not contain."""
     found = numbers_in(readme)
-    claimed = set().union(*(numbers_in(text) for text in project.claims))
+    texts = project.claims + (page.claims if page else [])
+    claimed = set().union(*(numbers_in(text) for text in texts))
     return sorted(claimed - found)
 
 
@@ -59,9 +60,16 @@ def url_status(url: str) -> int:
         return exc.code
 
 
-def verify(projects: list[Project], read: Callable[[str], str]) -> dict[str, list[str]]:
+def verify(
+    projects: list[Project],
+    read: Callable[[str], str],
+    pages: dict[str, Page] | None = None,
+) -> dict[str, list[str]]:
     """Map each project with unbacked numbers to those numbers."""
-    problems = {project.repo: missing_numbers(project, read(project.repo)) for project in projects}
+    pages = pages or {}
+    problems = {
+        p.repo: missing_numbers(p, read(p.repo), pages.get(p.repo)) for p in projects
+    }
     return {repo: numbers for repo, numbers in problems.items() if numbers}
 
 
@@ -75,8 +83,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     projects = load_projects(args.content)
+    pages = load_pages(args.content.parent / "pages", projects)
     read = local_reader(args.repos_dir) if args.repos_dir else remote_reader
-    problems = verify(projects, read)
+    problems = verify(projects, read, pages)
     for repo, numbers in problems.items():
         print(f"{repo}: not in README: {', '.join(numbers)}")
 
@@ -87,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
         for url, status in broken:
             print(f"{url}: HTTP {status}")
 
-    print(f"{len(projects)} projects checked, {len(problems)} with unbacked numbers")
+    print(f"{len(projects)} projects and pages checked, {len(problems)} with unbacked numbers")
     return 1 if problems or broken else 0
 
 

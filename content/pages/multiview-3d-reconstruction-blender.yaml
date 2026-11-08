@@ -1,0 +1,51 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  Structure-from-Motion recovers camera poses and 3D points from ordinary photos, and
+  COLMAP is the standard tool for it. I wrote the pipeline myself to see which parts are
+  hard, then compared it with COLMAP on the same images and scored both against ETH3D's
+  laser-aligned cameras and scans.
+approach:
+  - >-
+    Wrote relative pose estimation: a Hartley-normalised 8-point solver, RANSAC with
+    Sampson error and a non-linear refinement. OpenCV is used only for SIFT, PnP and image
+    I/O.
+  - >-
+    Built incremental SfM on top (tracks, PnP, triangulation, sparse bundle adjustment in
+    SciPy) and ran the same scenes through COLMAP with the same intrinsics.
+  - >-
+    Computed dense depth with a ZNCC plane sweep in PyTorch on the Apple GPU, fused depth
+    maps where several views agree and meshed the result with Poisson reconstruction.
+  - >-
+    Scripted Blender to orient the mesh from the camera positions and render a turntable.
+results:
+  caption: Registered images and median camera position error against ETH3D ground truth.
+  rows:
+    - ["Scene (images)", "Mine: registered", "Mine: median error", "COLMAP: registered", "COLMAP: median error"]
+    - ["pipes (14)", "14", "0.21 cm", "11", "0.26 cm"]
+    - ["meadow (15)", "6", "3.0 cm", "14", "4.4 cm"]
+    - ["terrace (23)", "23", "0.85 cm", "23", "1.69 cm"]
+    - ["relief (31)", "31", "0.24 cm", "31", "0.23 cm"]
+findings:
+  - >-
+    On the three ETH3D scenes where every camera registers, my median camera error is
+    0.21–0.85 cm, level with or better than COLMAP on pipes and terrace.
+  - >-
+    On two-view pose my solver is more precise (median rotation error 0.17° against
+    0.65° for OpenCV's 5-point), while OpenCV's is more reliable on the hardest pairs. The
+    refinement step is the biggest single gain.
+  - >-
+    Dense accuracy is good but completeness varies. On relief 96 % of fused points lie
+    within 5 cm of the laser scan, while pipes' white walls give ZNCC nothing to match.
+  - >-
+    My SfM cameras are good enough for dense work: terrace scores F1 0.76 with them
+    against 0.73 with the ground-truth cameras. That run also takes depth ranges from my
+    sparse points, so it isn't a pure camera comparison.
+limitations:
+  - >-
+    COLMAP is 15 to 100 times faster. On meadow the match graph splits and mine registers
+    6 of 15 images against 14.
+  - >-
+    On relief one of my cameras lands 56 cm off, which COLMAP avoids.
+  - >-
+    My SfM assumes known intrinsics, and the dense metric is a simplified ETH3D protocol
+    that isn't comparable with the official leaderboard.

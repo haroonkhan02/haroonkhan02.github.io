@@ -1,0 +1,50 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  A multi-object tracker has to keep the same ID on each person from frame to frame,
+  through crowds and occlusions. ByteTrack's idea is to also match low-confidence
+  detections instead of throwing them away. I wanted to measure what that alone is worth
+  against SORT, with everything else held fixed.
+approach:
+  - >-
+    Detected people in every MOT17 frame with a COCO-pretrained YOLO11x and cached the
+    boxes, so both trackers see identical input.
+  - >-
+    Wrote one constant-velocity Kalman filter and one Hungarian matcher, and built SORT
+    and ByteTrack on top, so the only difference is the association logic.
+  - >-
+    Tuned each tracker on the first half of every training sequence and scored the second
+    half with TrackEval.
+  - >-
+    Broke the errors down by visibility, box size and crowding, and separated direct ID
+    swaps from identities lost during occlusion.
+results:
+  caption: Validation halves of the seven MOT17 training sequences (54,042 annotated boxes), YOLO11x detections.
+  rows:
+    - ["Tracker", "HOTA", "MOTA", "IDF1", "ID switches"]
+    - ["SORT, paper defaults", "43.9", "41.9", "49.6", "395"]
+    - ["SORT, tuned", "48.9", "43.8", "56.4", "512"]
+    - ["ByteTrack, paper defaults", "46.5", "41.4", "53.8", "144"]
+    - ["ByteTrack, tuned", "51.1", "45.7", "59.8", "269"]
+findings:
+  - >-
+    Tuned ByteTrack beats tuned SORT on all seven sequences, by 0.8 to 4.5 HOTA, with about
+    half the ID switches.
+  - >-
+    Both tuned trackers drop the detection threshold to 0.2. That buys recall with extra
+    false positives, which is why tuned SORT has more ID switches than its defaults but
+    still scores higher.
+  - >-
+    Detection caps everything. DetA stays around 47, and the detector covers only 38.0 %
+    of heavily occluded boxes.
+  - >-
+    ByteTrack cuts direct swaps between neighbours from 161 to 68, but identities lost
+    after more than 30 unmatched frames barely change (56 vs 42).
+limitations:
+  - >-
+    There are no appearance features, so a long occlusion ends in a new ID. Re-identification
+    is the next step.
+  - >-
+    The tuned ByteTrack thresholds sit on the lower edge of the search grid, and I haven't
+    ablated which of its components gives most of the gain.
+  - >-
+    Results are on MOT17 training sequences, not the official test server.

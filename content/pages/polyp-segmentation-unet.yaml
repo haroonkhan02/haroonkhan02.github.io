@@ -1,0 +1,51 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  A segmentation mask on its own doesn't say when to trust it. Monte Carlo dropout gives
+  a per-pixel uncertainty map almost for free, but it is often shown as a pretty heatmap
+  and never checked. I trained a polyp segmenter on Kvasir-SEG and measured whether its
+  uncertainty is actually high where it is wrong. It is a learning project, not a
+  clinical tool.
+approach:
+  - >-
+    Split the 1,000 Kvasir-SEG frames 80/10/10 with a committed, seeded split, so the
+    test set stays untouched.
+  - >-
+    Trained a U-Net with an ImageNet ResNet-34 encoder on BCE plus soft Dice, with
+    channel dropout after each decoder block, and kept the checkpoint with the best
+    validation Dice.
+  - >-
+    Kept dropout on at test time for 20 passes and scored the per-pixel standard
+    deviation against the model's own errors (AUROC and Spearman).
+  - >-
+    Exported to ONNX and CoreML, plus a second graph that runs the encoder once and the
+    decoder 8 times, so the uncertainty map also runs in the browser.
+results:
+  caption: Dice and recall by polyp size on the 100-image held-out test split, threshold 0.5.
+  rows:
+    - ["Polyp size (share of frame)", "Images", "Mean Dice", "Recall"]
+    - ["Small (< 5 %)", "16", "0.868", "0.908"]
+    - ["Medium (5–20 %)", "51", "0.938", "0.937"]
+    - ["Large (> 20 %)", "33", "0.867", "0.843"]
+    - ["All", "100", "0.904", "0.901"]
+findings:
+  - >-
+    75 of 100 test images score above 0.9 and the median is 0.95. The mean is pulled down
+    by four hard cases below 0.5, all flat or multi-part polyps that are only partly
+    segmented.
+  - >-
+    Errors are misses rather than false alarms: precision is 0.937 against recall 0.901.
+  - >-
+    The uncertainty map finds boundary errors well. Its std is 0.103 on wrong pixels
+    against 0.010 on correct ones, with a pixel-error AUROC of 0.930.
+  - >-
+    It is a poor miss detector. The worst image ranks only 29th of 100 by uncertainty,
+    because every dropout sample agrees the missed tissue is normal mucosa.
+limitations:
+  - >-
+    Single-centre data and my own split, so the numbers aren't strictly comparable to
+    papers, and 100 test images leave about ±0.025 noise on mean Dice.
+  - >-
+    Every Kvasir-SEG frame contains a polyp, so false positives on healthy tissue are
+    unmeasured.
+  - >-
+    MC dropout doesn't flag confident errors. A deep ensemble is the next comparison.

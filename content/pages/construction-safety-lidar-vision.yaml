@@ -1,0 +1,53 @@
+# Project page. Every number here must also appear in the project's README (site-verify).
+problem: >-
+  A construction site needs two different safety checks: is each worker wearing a hard hat
+  and vest, and is anyone standing too close to a working machine. The first is a camera
+  problem and the second a LiDAR one. Both have to answer per person, and an alert is only
+  useful if you can tell why it fired.
+approach:
+  - >-
+    Fine-tuned YOLO11n on 10 PPE classes, then wrote rules that attach hard hats and vests
+    to the person wearing them and flag workers with a violation.
+  - >-
+    Built a classical LiDAR pipeline: crop and voxel grid, RANSAC ground removal seeded
+    with the lowest point of each 1 m cell, DBSCAN, and gradient-boosted trees on 14
+    cluster features to pick out people.
+  - >-
+    Raised red (3 m) and amber (6 m) alerts around the machine with a debounce. Parameters
+    were chosen on 6 Argoverse 2 logs and tested once on 6 others.
+  - >-
+    Exported the PPE detector to ONNX and CoreML, re-scored every file, and ported the
+    post-processing to JavaScript so a 3.3 MB INT8 model runs in the browser.
+results:
+  caption: PPE checks on the Roboflow test split, LiDAR on 6 held-out Argoverse 2 logs (192 sweeps).
+  rows:
+    - ["Check", "Data", "Result"]
+    - ["PPE mAP@0.5", "All 82 test images", "0.713"]
+    - ["PPE mAP@0.5", "40 clean test images", "0.671"]
+    - ["Violation flagging", "PPE test split", "0.97 precision, 0.68 recall"]
+    - ["LiDAR person F1, hand-written rules", "192 sweeps", "0.406"]
+    - ["LiDAR person F1, boosted trees", "192 sweeps", "0.626"]
+    - ["Red-zone alerts", "18 occupied frames", "1.00 precision, 17/18 recall"]
+findings:
+  - >-
+    Half of the shipped test images come from videos that also appear in training. On the
+    clean subset mAP@0.5 drops from 0.713 to 0.671, which is the leakage effect.
+  - >-
+    Plain RANSAC fit a band through the walls in more than half the sweeps (median error
+    1.2 m). Seeding it from the lowest points brought that to 7 cm and raised cluster
+    recall from 0.61 to 0.83.
+  - >-
+    LiDAR recall is limited by clustering, not the classifier: 16 % of people never get a
+    cluster of their own because they merge with a pole, a wall or another person.
+  - >-
+    INT8 costs about 0.01 mAP@0.5 and one caught violation, and the browser pipeline
+    returns exactly Python's boxes on the 82 test images.
+limitations:
+  - >-
+    Argoverse 2 is a car in city traffic, not a construction site, so scaffolding and
+    rebar are untested. The sensor vehicle stands in for the machine.
+  - >-
+    Only 18 frames have someone in the red zone, so the recall interval is wide
+    (0.74–0.99).
+  - >-
+    Violation recall is 0.68. Most misses are workers the detector didn't find at all.
